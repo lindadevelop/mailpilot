@@ -7,8 +7,10 @@ import react from '@vitejs/plugin-react';
  */
 export default defineConfig({
   plugins: [react()],
+  // O domínio do túnel (trycloudflare.com) é dinâmico: sem isto o Vite recusa o Host.
   server: {
     port: 5173,
+    allowedHosts: true,
     proxy: {
       '/api': { target: 'http://127.0.0.1:8100', changeOrigin: true },
       '/health': { target: 'http://127.0.0.1:8100', changeOrigin: true },
@@ -18,6 +20,7 @@ export default defineConfig({
   // desenvolvimento — sem isto, a pré-visualização não falava com a API.
   preview: {
     port: 5173,
+    allowedHosts: true,
     proxy: {
       '/api': { target: 'http://127.0.0.1:8100', changeOrigin: true },
       '/health': { target: 'http://127.0.0.1:8100', changeOrigin: true },

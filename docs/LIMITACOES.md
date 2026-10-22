@@ -36,3 +36,16 @@ estados do documento, evidências obrigatórias e correções manuais com preced
   qualidade: o modelo classificou como «informal» uma mensagem que começa por «Bom dia»
   e inferiu D a partir de **uma** mensagem — daí o estado ser «sugestão» e não conclusão.
 * `pytest`: **48 testes a passar** (39 + 9).
+
+## Acesso pelo túnel (temporário)
+
+O frontend está publicado por um quick tunnel do Cloudflare, apontado ao
+`vite preview` (porta do preview) e com `allowedHosts: true` no `vite.config.ts`:
+
+* **https://letting-ide-depends-snapshot.trycloudflare.com** (local: `npm run preview` + `cloudflared tunnel --url http://localhost:5175`)
+* O `/api` chega à API local por proxy do próprio Vite, por isso o túnel serve
+  frontend **e** dados.
+* O URL muda a cada arranque do `cloudflared` — ler de `%TEMP%	unnel-port-5175.log`.
+
+Nota: a API em `:8100` estava a correr com uma versão anterior do código nesta
+sessão (os endpoints das Fases 3-5 só aparecem depois de reiniciar o `uvicorn`).

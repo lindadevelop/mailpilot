@@ -35,5 +35,6 @@ def init_db() -> None:
     from . import models  # noqa: F401  (registar as tabelas)
     from . import models_analysis  # noqa: F401  (Fase 2)
     from . import models_communication  # noqa: F401  (Fase 4)
+    from . import models_drafting  # noqa: F401  (Fase 5)
 
     Base.metadata.create_all(bind=engine)
