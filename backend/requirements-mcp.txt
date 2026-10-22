@@ -1,0 +1,2 @@
+# Dependência opcional para o servidor MCP (Fase 3)
+mcp[cli]>=1.2
