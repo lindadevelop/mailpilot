@@ -21,3 +21,18 @@ estados do documento, evidências obrigatórias e correções manuais com preced
   propagado (`OllamaError`) e **nada inválido foi gravado**. Para concluir: aumentar
   o timeout (`OllamaClient(timeout=600)`), manter o modelo carregado (`ollama run`)
   ou usar um modelo mais leve.
+
+## Fase 4 — estado (preferências de comunicação e DISC)
+
+* Implementado: perfil por contacto (formalidade, concisão, detalhe, prazos, pedidos
+  explícitos) + **hipótese DISC** (D/I/S/C/combinação/Indeterminado) com confiança e
+  citações literais obrigatórias.
+* **Limites de uso aplicados no código**: sem citações não há perfil; a hipótese é
+  sempre guardada como `sugestao` com aviso de que não é diagnóstico nem serve para
+  decisões laborais; uma revisão **confirmada por pessoa** nunca é substituída pela IA;
+  o perfil pode ser desativado.
+* **Teste real** (llama3.2:3b, contacto cliente@exemplo.pt): hipótese **D**, confiança
+  0.8, evidência literal «Bom dia, podem enviar proposta até sexta-feira?». Ressalva de
+  qualidade: o modelo classificou como «informal» uma mensagem que começa por «Bom dia»
+  e inferiu D a partir de **uma** mensagem — daí o estado ser «sugestão» e não conclusão.
+* `pytest`: **48 testes a passar** (39 + 9).
