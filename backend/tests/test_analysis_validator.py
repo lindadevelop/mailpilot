@@ -4,7 +4,11 @@ import pytest
 
 from app.ai.validator import AnalysisError, extract_json, validate_analysis
 
-IDS = {10, 11, 12}
+IDS = {
+    10: 'Bom dia, podem enviar proposta até sexta-feira? Obrigado.',
+    11: 'Segue a proposta em anexo. Confirmem, por favor.',
+    12: 'Recebido, obrigado.',
+}
 
 
 def test_extrai_json_simples():
@@ -65,12 +69,46 @@ def test_prazo_com_evidencia_e_aceite():
             'state': 'Preciso responder',
             'confidence': 0.9,
             'deadline_text': 'até sexta-feira',
-            'evidence': [{'message_id': 11, 'quote': 'podem enviar até sexta-feira?'}],
+            'evidence': [{'message_id': 10, 'quote': 'podem enviar proposta até sexta-feira?'}],
         },
         IDS,
     )
     assert resultado['deadline_text'] == 'até sexta-feira'
-    assert resultado['evidence'][0]['message_id'] == 11
+    assert resultado['evidence'][0]['message_id'] == 10
+
+
+def test_citacao_inventada_e_recusada():
+    """O caso real: o modelo citou "Obrigado." para sustentar o prazo "sexta-feira"."""
+    with pytest.raises(AnalysisError):
+        validate_analysis(
+            {
+                'state': 'Preciso responder',
+                'confidence': 0.9,
+                'deadline_text': 'sexta-feira',
+                'evidence': [{'message_id': 10, 'quote': 'sexta-feira é o prazo máximo'}],
+            },
+            IDS,
+        )
+
+
+def test_citacao_demasiado_curta_e_recusada():
+    with pytest.raises(AnalysisError):
+        validate_analysis(
+            {'state': 'Preciso responder', 'confidence': 0.9, 'evidence': [{'message_id': 10, 'quote': 'Obrigado.'}]},
+            IDS,
+        )
+
+
+def test_citacao_tolera_acentos_e_maiusculas():
+    resultado = validate_analysis(
+        {
+            'state': 'Preciso responder',
+            'confidence': 0.8,
+            'evidence': [{'message_id': 10, 'quote': 'BOM DIA, PODEM ENVIAR PROPOSTA'}],
+        },
+        IDS,
+    )
+    assert resultado['evidence'][0]['message_id'] == 10
 
 
 def test_estado_indeterminado_e_aceite():

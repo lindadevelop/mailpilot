@@ -96,7 +96,7 @@ def analisar_conversa(db: Session, conversa: Conversation, provider: Provider, m
         return {'conversation_id': conversa.id, 'state': conversa.state, 'aplicado': False,
                 'motivo': 'sem_mensagens'}
 
-    ids_validos = {m['id'] for m in mensagens}
+    ids_validos = {m['id']: (m.get('body') or '') for m in mensagens}
     prompt = build_conversation_prompt(mensagens)
 
     try:

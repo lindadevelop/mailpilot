@@ -34,7 +34,7 @@ def _resposta_para(message_id: int, state: str = 'Preciso responder') -> str:
             'partial_answers': [],
             'commitments': [],
             'deadline_text': None,
-            'evidence': [{'message_id': message_id, 'quote': 'podem enviar proposta?'}],
+            'evidence': [{'message_id': message_id, 'quote': 'Podem enviar proposta até sexta-feira'}],
         }
     )
 

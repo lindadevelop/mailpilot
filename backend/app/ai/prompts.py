@@ -22,14 +22,20 @@ Estados possíveis (usa exatamente um):
 {chr(10).join('- ' + s for s in PENDENCY_STATES)}
 
 Regras:
-1. Se o último pedido do interlocutor continua sem resposta adequada, o estado é "Preciso responder".
-2. Se a resposta enviada for INCOMPLETA (não cobre todas as perguntas), NÃO é "Resolvido".
-3. Se fui eu que pedi algo e estou à espera, o estado é "Aguardo resposta de terceiros".
+1. Olha para QUEM TEM A BOLA: se a última mensagem é RECEBIDA e contém uma pergunta ou pedido dirigido a mim, o estado é "Preciso responder".
+2. Se a última mensagem é ENVIADA por mim e contém um pedido dirigido a outra pessoa, o estado é "Aguardo resposta de terceiros". Só uses este estado quando EU pedi algo — nunca quando o pedido é do cliente.
+3. Se a resposta enviada for INCOMPLETA (não cobre todas as perguntas), NÃO é "Resolvido".
 4. Se existe uma tarefa minha sem prazo de resposta a terceiros, é "Preciso executar tarefa".
 5. "Resolvido" exige que todos os pedidos estejam respondidos ou concluídos.
 6. NÃO inventes prazos nem compromissos. Só preenche `deadline_text` se estiver escrito na conversa; caso contrário usa null.
 7. Sem certeza relevante, usa "Indeterminado" e explica porquê.
-8. As citações em `evidence` têm de ser excertos literais das mensagens indicadas pelos respetivos `message_id`.
+8. As citações em `evidence` têm de ser CÓPIAS LITERAIS (mínimo 12 caracteres) de um excerto da mensagem indicada por `message_id`. Nunca cites uma frase que não esteja escrita nessa mensagem; sem citação válida, o resultado é rejeitado.
+
+EXEMPLO (aprende com ele):
+Conversa: [message_id=1] RECEBIDO | de: cliente@exemplo.pt — "Bom dia, podem enviar proposta até sexta-feira?"
+Resposta correta:
+{{"state": "Preciso responder", "reason": "O cliente pediu proposta até sexta-feira e ainda não respondi.", "confidence": 0.9, "questions": ["Enviar proposta comercial"], "partial_answers": [], "commitments": [], "deadline_text": "até sexta-feira", "evidence": [{{"message_id": 1, "quote": "podem enviar proposta até sexta-feira"}}]}}
+Repara: a última mensagem é RECEBIDA e tem um pedido → "Preciso responder"; o prazo só aparece porque está escrito; a citação é literal e tem mais de 12 caracteres.
 
 Responde APENAS com um objeto JSON, sem texto à volta, com esta forma:
 {{

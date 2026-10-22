@@ -16,11 +16,11 @@ class OllamaClient:
     feita depois, em `validator.py`, porque o formato não garante correção.
     """
 
-    def __init__(self, base_url: str | None = None, model: str | None = None, timeout: float = 120.0):
+    def __init__(self, base_url: str | None = None, model: str | None = None, timeout: float | None = None):
         settings = get_settings()
         self.base_url = (base_url or settings.ollama_base_url).rstrip('/')
         self.model = model or settings.ollama_model
-        self.timeout = timeout
+        self.timeout = timeout if timeout is not None else settings.ollama_timeout
 
     def disponivel(self) -> bool:
         try:

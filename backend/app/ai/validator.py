@@ -43,8 +43,27 @@ def extract_json(texto: str) -> dict[str, Any]:
     return dados
 
 
-def validate_analysis(dados: dict[str, Any], ids_validos: set[int]) -> dict[str, Any]:
-    """Valida e normaliza o resultado. Lança `AnalysisError` se algo não bater certo."""
+def _normalizar(texto: str) -> str:
+    """Comparação tolerante a acentos, maiúsculas e espaços repetidos."""
+    import unicodedata
+
+    sem_acentos = ''.join(
+        c for c in unicodedata.normalize('NFD', texto.lower()) if unicodedata.category(c) != 'Mn'
+    )
+    return ' '.join(sem_acentos.split())
+
+
+MIN_QUOTE_CHARS = 12
+
+
+def validate_analysis(dados: dict[str, Any], mensagens: dict[int, str]) -> dict[str, Any]:
+    """Valida e normaliza o resultado. Lança `AnalysisError` se algo não bater certo.
+
+    `mensagens` mapeia `message_id -> corpo`. A citação de cada evidência tem de
+    existir REALMENTE nesse corpo: sem isto, o modelo cita frases plausíveis que
+    não estão na conversa (foi o que aconteceu com o prazo «sexta-feira» sustentado
+    pela citação "Obrigado.").
+    """
     estado = str(dados.get('state', '')).strip()
     if estado not in PENDENCY_STATES:
         raise AnalysisError(f'Estado inválido: {estado!r}')
@@ -66,10 +85,16 @@ def validate_analysis(dados: dict[str, Any], ids_validos: set[int]) -> dict[str,
             mid = int(item.get('message_id'))
         except (TypeError, ValueError):
             continue
-        if mid not in ids_validos:
+        if mid not in mensagens:
             # Evidência que não pertence à conversa: sinal de invenção — recusa tudo.
             raise AnalysisError(f'Evidência inválida: message_id {mid} não pertence à conversa.')
+
         quote = (item.get('quote') or '').strip()
+        if len(quote) < MIN_QUOTE_CHARS:
+            raise AnalysisError(f'Citação demasiado curta para servir de prova: {quote!r}')
+        if _normalizar(quote) not in _normalizar(mensagens[mid] or ''):
+            raise AnalysisError(f'Citação não existe na mensagem {mid}: {quote!r}')
+
         evidencias.append({'message_id': mid, 'quote': quote[:1000]})
 
     prazo_texto = dados.get('deadline_text')
