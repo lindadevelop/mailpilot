@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api.routes import router
+from .api.routes_analysis import router as analysis_router
 from .config import get_settings
 from .db import init_db
 
@@ -36,3 +37,4 @@ app.add_middleware(
 )
 
 app.include_router(router)
+app.include_router(analysis_router)

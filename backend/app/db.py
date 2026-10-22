@@ -33,5 +33,6 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False
 
 def init_db() -> None:
     from . import models  # noqa: F401  (registar as tabelas)
+    from . import models_analysis  # noqa: F401  (Fase 2)
 
     Base.metadata.create_all(bind=engine)
