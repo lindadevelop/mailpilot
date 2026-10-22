@@ -31,3 +31,12 @@ cd backend
 A autenticação da API é feita por chave (`X-API-Key`); a importação de emails
 entra por `POST /api/emails/batch` e é **idempotente** por
 `(conta, origem, identificador estável)`.
+
+## Frontend (Fase 1, parte 2)
+
+```powershell
+scripts\windowsrrancar-frontend.ps1   # http://127.0.0.1:5173
+```
+
+O frontend fala com a API por proxy (sem CORS) e guarda a chave `X-API-Key` no
+browser, com atualização parcial a cada 30 s.
