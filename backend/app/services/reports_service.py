@@ -27,6 +27,15 @@ def normalizar_assunto(assunto: str | None) -> str:
     return texto or '(sem assunto)'
 
 
+def dominio(endereco: str | None) -> str:
+    """Domínio de um endereço, em minúsculas. É o que agrupa "samsys": todos os
+    colegas do mesmo domínio ficam no mesmo grupo, sem juntar domínios distintos."""
+    limpo = (endereco or '').strip().lower()
+    if '@' not in limpo:
+        return ''
+    return limpo.rsplit('@', 1)[1].strip('>')
+
+
 def _remetentes(db: Session, ids: list[int]) -> dict[int, dict]:
     """Remetente da última mensagem e da última recebida, por conversa (uma query)."""
     if not ids:
@@ -51,9 +60,12 @@ def remetentes_por_conversa(db: Session, ids: list[int]) -> dict[int, dict]:
     saida: dict[int, dict] = {}
     for cid, dados in bruto.items():
         contraparte = dados['ultima_recebida'] or dados['ultimo'] or {}
+        endereco = contraparte.get('sender')
         saida[cid] = {
-            'sender': contraparte.get('sender'),
+            'sender': endereco,
+            'sender_domain': dominio(endereco),
             'last_sender': (dados['ultimo'] or {}).get('sender'),
+            'last_sender_domain': dominio((dados['ultimo'] or {}).get('sender')),
             'last_direction': (dados['ultimo'] or {}).get('direction'),
             'unread': dados['por_ler'],
         }
@@ -80,6 +92,7 @@ def resumo_por_assunto(db: Session, limite: int = 50) -> dict:
                 'por_ler': 0,
                 'estados': {},
                 'remetentes': set(),
+                'dominios': set(),
                 'ultima': None,
                 'conversation_ids': [],
             },
@@ -92,6 +105,8 @@ def resumo_por_assunto(db: Session, limite: int = 50) -> dict:
         grupo['estados'][c.state] = grupo['estados'].get(c.state, 0) + 1
         if contraparte:
             grupo['remetentes'].add(contraparte)
+            if dominio(contraparte):
+                grupo['dominios'].add(dominio(contraparte))
         grupo['conversation_ids'].append(c.id)
         if c.last_message_at and (grupo['ultima'] is None or c.last_message_at > grupo['ultima']):
             grupo['ultima'] = c.last_message_at
@@ -117,6 +132,7 @@ def resumo_por_assunto(db: Session, limite: int = 50) -> dict:
                 'estado': principal,
                 'estados': estados,
                 'remetentes': sorted(grupo['remetentes']),
+                'dominios': sorted(grupo['dominios']),
                 'ultima': grupo['ultima'].isoformat() if grupo['ultima'] else None,
                 'conversation_ids': sorted(grupo['conversation_ids']),
             }

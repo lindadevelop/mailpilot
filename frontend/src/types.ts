@@ -20,6 +20,7 @@ export interface Dashboard {
 export interface Conversation {
   /** Quem escreveu (a contraparte, isto é, a última mensagem recebida). */
   sender?: string | null;
+  sender_domain?: string | null;
   /** Autor da última mensagem, seja recebida ou enviada. */
   last_sender?: string | null;
   last_direction?: string | null;
@@ -83,6 +84,7 @@ export interface SubjectSummary {
   estado: string;
   estados: Record<string, number>;
   remetentes: string[];
+  dominios: string[];
   ultima: string | null;
   conversation_ids: number[];
 }

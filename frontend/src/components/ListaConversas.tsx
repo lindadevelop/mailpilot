@@ -54,6 +54,12 @@ export function ListaConversas({ conversas, total, aCarregar, filtroEstado, onFi
       render: (c) => <span style={{ fontSize: 12 }}>{c.sender ?? '—'}</span>,
     },
     {
+      chave: 'dominio',
+      titulo: 'Domínio',
+      valor: (c) => c.sender_domain ?? '',
+      render: (c) => <span style={{ fontSize: 12 }}>{c.sender_domain || '—'}</span>,
+    },
+    {
       chave: 'estado',
       titulo: 'Estado',
       valor: (c) => c.state,
@@ -107,7 +113,7 @@ export function ListaConversas({ conversas, total, aCarregar, filtroEstado, onFi
         linhas={conversas}
         colunas={colunas}
         chaveLinha={(c) => c.id}
-        agrupaveis={['estado', 'remetente']}
+        agrupaveis={['estado', 'dominio', 'remetente']}
         textoVazio="Sem conversas. Importe mensagens pela API (POST /api/emails/batch) para começar."
       />
     </>

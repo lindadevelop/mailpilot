@@ -86,6 +86,23 @@ export function ResumoAssuntos({ onAbrir }: Props) {
           </>
         ),
     },
+    {
+      chave: 'dominios',
+      titulo: 'Domínios',
+      valor: (t) => t.dominios.join(', '),
+      render: (t) =>
+        t.dominios.length === 0 ? (
+          '—'
+        ) : (
+          <>
+            {t.dominios.map((d) => (
+              <div key={d} style={{ fontSize: 12 }}>
+                {d}
+              </div>
+            ))}
+          </>
+        ),
+    },
     { chave: 'conversas', titulo: 'Conversas', valor: (t) => t.conversas },
     { chave: 'mensagens', titulo: 'Mensagens', valor: (t) => t.mensagens },
     {
@@ -133,7 +150,7 @@ export function ResumoAssuntos({ onAbrir }: Props) {
         linhas={dados?.items ?? []}
         colunas={colunas}
         chaveLinha={(t) => t.assunto}
-        agrupaveis={['estado', 'remetentes']}
+        agrupaveis={['estado', 'dominios', 'remetentes']}
         textoVazio="Sem assuntos. Importe mensagens para começar a ver os temas agrupados."
       />
 

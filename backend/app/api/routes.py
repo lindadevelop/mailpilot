@@ -87,6 +87,7 @@ def list_conversations(
                 'id': c.id,
                 'subject': c.subject,
                 'sender': remetentes.get(c.id, {}).get('sender'),
+                'sender_domain': remetentes.get(c.id, {}).get('sender_domain'),
                 'last_sender': remetentes.get(c.id, {}).get('last_sender'),
                 'last_direction': remetentes.get(c.id, {}).get('last_direction'),
                 'unread': remetentes.get(c.id, {}).get('unread', 0),

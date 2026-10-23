@@ -103,3 +103,48 @@ def test_resumo_traz_estado_do_tema(payload_factory):
     assert tema['estado'] in {'Indeterminado', 'Preciso responder', 'Em análise'}
     assert tema['mensagens'] >= 1
     assert isinstance(tema['conversation_ids'], list) and tema['conversation_ids']
+
+
+def test_dominio_extrai_e_normaliza():
+    assert reports_service.dominio('Ana.Silva@Samsys.PT') == 'samsys.pt'
+    assert reports_service.dominio('brunocoelho@loba.com') == 'loba.com'
+    assert reports_service.dominio('sem-arroba') == ''
+    assert reports_service.dominio(None) == ''
+
+
+def test_listagem_traz_dominio_do_remetente(payload_factory):
+    from app.db import SessionLocal
+    from app.services import import_service
+
+    db = SessionLocal()
+    try:
+        import_service.import_batch(db, payload_factory(['id-dom'], conversation_external_id='conv-dom'))
+    finally:
+        db.close()
+    with TestClient(app) as cliente:
+        corpo = cliente.get('/api/conversations', headers=CABECALHO).json()
+    item = next(i for i in corpo['items'] if i['id'])
+    assert 'sender_domain' in item, 'a listagem não traz o domínio do remetente'
+    assert item['sender_domain'] == reports_service.dominio(item['sender'])
+
+
+def test_resumo_agrupa_por_dominio():
+    from app.db import SessionLocal
+    from app.services import import_service
+
+    db = SessionLocal()
+    try:
+        import_service.import_batch(db, BatchIn(**{
+            'account_email': 'compras@empresa.pt', 'source': 'grok',
+            'messages': [
+                _mensagem('d-1', 'conv-dom-a', 'Assunto partilhado', 'ana@samsys.pt'),
+                _mensagem('d-2', 'conv-dom-b', 'Assunto partilhado', 'rui@samsys.pt'),
+            ],
+        }))
+    finally:
+        db.close()
+    with TestClient(app) as cliente:
+        corpo = cliente.get('/api/reports/subjects', headers=CABECALHO).json()
+    tema = next(i for i in corpo['items'] if i['assunto'] == 'Assunto partilhado')
+    assert 'samsys.pt' in tema['dominios'], 'o tema não trouxe o domínio para agrupar'
+    assert len(tema['remetentes']) >= 1
