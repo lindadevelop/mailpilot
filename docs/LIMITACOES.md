@@ -49,3 +49,15 @@ O frontend está publicado por um quick tunnel do Cloudflare, apontado ao
 
 Nota: a API em `:8100` estava a correr com uma versão anterior do código nesta
 sessão (os endpoints das Fases 3-5 só aparecem depois de reiniciar o `uvicorn`).
+
+## API reiniciada (correcao de processo)
+
+O processo antigo do `uvicorn` continuava a servir a porta 8100 com codigo anterior.
+Causa da dificuldade em termina-lo: neste shell o `taskkill //F` NAO e traduzido e o
+comando falha com "Invalid argument/option" — a forma que funciona e
+`powershell -NoProfile -Command "Stop-Process -Id <pid> -Force"`, com o PID obtido por
+`netstat -ano | grep LISTENING | grep ":8100"`.
+
+Depois de reiniciar, verificado: `/api/pending` devolve 1 pendencia real,
+`/api/conversations/1/analysis` devolve estado/confianca/prazo/citacao e tudo isto
+responde tambem pelo tunel.
