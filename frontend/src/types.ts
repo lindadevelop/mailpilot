@@ -18,6 +18,12 @@ export interface Dashboard {
 }
 
 export interface Conversation {
+  /** Quem escreveu (a contraparte, isto é, a última mensagem recebida). */
+  sender?: string | null;
+  /** Autor da última mensagem, seja recebida ou enviada. */
+  last_sender?: string | null;
+  last_direction?: string | null;
+  unread?: number;
   id: number;
   subject: string | null;
   state: PendencyState | string;
@@ -67,3 +73,22 @@ export interface Draft {
 
 export const DRAFT_MODES = ['objetivo', 'diplomatico', 'tecnico', 'firme_cordial'] as const;
 export type DraftMode = (typeof DRAFT_MODES)[number];
+
+export interface SubjectSummary {
+  assunto: string;
+  variantes: string[];
+  conversas: number;
+  mensagens: number;
+  por_ler: number;
+  estado: string;
+  estados: Record<string, number>;
+  remetentes: string[];
+  ultima: string | null;
+  conversation_ids: number[];
+}
+
+export interface SubjectsReport {
+  total_temas: number;
+  total_conversas: number;
+  items: SubjectSummary[];
+}

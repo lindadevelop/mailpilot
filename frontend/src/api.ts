@@ -1,4 +1,4 @@
-import type { Analysis, ConversationPage, Dashboard, Draft, SyncStatus } from './types';
+import type { Analysis, ConversationPage, Dashboard, Draft, SubjectsReport, SyncStatus } from './types';
 
 /**
  * Cliente da API local. A chave é guardada no browser (localStorage) e enviada
@@ -94,4 +94,5 @@ export const api = {
       discard,
     }),
   alteracoes: (horas = 24) => pedir<Record<string, unknown>>(`/api/reports/changes?horas=${horas}`),
+  assuntos: (limite = 50) => pedir<SubjectsReport>(`/api/reports/subjects?limite=${limite}`),
 };

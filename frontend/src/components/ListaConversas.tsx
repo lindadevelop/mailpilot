@@ -53,6 +53,7 @@ export function ListaConversas({ conversas, total, aCarregar, filtroEstado, onFi
           <thead>
             <tr>
               <th>Assunto</th>
+              <th>Quem enviou</th>
               <th>Estado</th>
               <th>Mensagens</th>
               <th>Última</th>
@@ -67,9 +68,21 @@ export function ListaConversas({ conversas, total, aCarregar, filtroEstado, onFi
                   </button>
                 </td>
                 <td>
+                  <div style={{ fontSize: 12 }}>{c.sender ?? '—'}</div>
+                  {c.last_sender && c.last_sender !== c.sender && (
+                    <div className="rodape" style={{ fontSize: 11 }}>
+                      última: {c.last_sender}
+                      {c.last_direction === 'out' ? ' (enviada por nós)' : ''}
+                    </div>
+                  )}
+                </td>
+                <td>
                   <span className={`etiqueta${c.state === 'Indeterminado' ? ' alerta' : ''}`}>{c.state}</span>
                 </td>
-                <td>{c.message_count}</td>
+                <td>
+                  {c.message_count}
+                  {c.unread ? <span className="rodape"> · {c.unread} por ler</span> : null}
+                </td>
                 <td>{formatarData(c.last_message_at)}</td>
               </tr>
             ))}

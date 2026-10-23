@@ -3,6 +3,7 @@ import { api, getApiKey, setApiKey } from './api';
 import { Indicadores } from './components/Indicadores';
 import { ListaConversas } from './components/ListaConversas';
 import { PainelConversa } from './components/PainelConversa';
+import { ResumoAssuntos } from './components/ResumoAssuntos';
 import type { Conversation, Dashboard } from './types';
 
 export default function App() {
@@ -15,6 +16,7 @@ export default function App() {
   const [aCarregar, setACarregar] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [aberta, setAberta] = useState<Conversation | null>(null);
+  const [aba, setAba] = useState<'conversas' | 'assuntos'>('conversas');
 
   const carregar = useCallback(async () => {
     if (!chaveGuardada) return;
@@ -90,16 +92,35 @@ export default function App() {
           <>
             <Indicadores dados={dashboard} />
             {aberta && <PainelConversa conversa={aberta} onFechar={() => setAberta(null)} />}
-            <ListaConversas
-              conversas={conversas}
-              total={total}
-              aCarregar={aCarregar}
-              filtroEstado={filtroEstado}
-              onFiltroEstado={setFiltroEstado}
-              onAbrir={(id) => setAberta(conversas.find((c) => c.id === id) ?? null)}
-            />
+            <div className="filtros" style={{ marginBottom: 12 }}>
+              <button className={aba === 'conversas' ? 'primario' : ''} onClick={() => setAba('conversas')}>
+                Conversas
+              </button>
+              <button className={aba === 'assuntos' ? 'primario' : ''} onClick={() => setAba('assuntos')}>
+                Resumo dos assuntos
+              </button>
+            </div>
+            {aba === 'conversas' ? (
+              <ListaConversas
+                conversas={conversas}
+                total={total}
+                aCarregar={aCarregar}
+                filtroEstado={filtroEstado}
+                onFiltroEstado={setFiltroEstado}
+                onAbrir={(id) => setAberta(conversas.find((c) => c.id === id) ?? null)}
+              />
+            ) : (
+              <ResumoAssuntos
+                onAbrir={(id) => {
+                  const alvo = conversas.find((c) => c.id === id);
+                  if (alvo) setAberta(alvo);
+                  else setErro('Essa conversa não está na página atual — abra a aba «Conversas» e atualize.');
+                }}
+              />
+            )}
             <p className="rodape">
-              Fase 1 · classificação por IA (Ollama), resumo e ações chegam na Fase 2.
+              Classificação por IA (Ollama) com evidências · rascunhos para revisão humana · o MailPilot não envia
+              emails.
             </p>
           </>
         )}

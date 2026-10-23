@@ -9,6 +9,7 @@ from ..db import SessionLocal
 from ..models import Conversation, Message
 from ..schemas import BatchIn, BatchOut, CompleteIn, SyncStatusOut
 from ..services import import_service
+from ..services import reports_service
 
 router = APIRouter()
 
@@ -76,12 +77,19 @@ def list_conversations(
         stmt = stmt.where(Conversation.state == state)
     rows = db.scalars(stmt.limit(limit).offset(offset)).all()
     total = db.scalar(select(func.count(Conversation.id))) or 0
+    # Quem escreveu: a contraparte (última mensagem recebida) e o autor da última
+    # mensagem, para a lista dizer de quem é o email sem abrir a conversa.
+    remetentes = reports_service.remetentes_por_conversa(db, [c.id for c in rows])
     return {
         'total': total,
         'items': [
             {
                 'id': c.id,
                 'subject': c.subject,
+                'sender': remetentes.get(c.id, {}).get('sender'),
+                'last_sender': remetentes.get(c.id, {}).get('last_sender'),
+                'last_direction': remetentes.get(c.id, {}).get('last_direction'),
+                'unread': remetentes.get(c.id, {}).get('unread', 0),
                 'state': c.state,
                 'message_count': c.message_count,
                 'last_message_at': c.last_message_at.isoformat() if c.last_message_at else None,
@@ -89,6 +97,12 @@ def list_conversations(
             for c in rows
         ],
     }
+
+
+@router.get('/api/reports/subjects', dependencies=[Depends(require_api_key)])
+def relatorio_assuntos(limite: int = Query(default=50, le=200), db: Session = Depends(get_db)) -> dict:
+    """Resumo por assunto: quantos temas, quem escreve e o que exige ação."""
+    return reports_service.resumo_por_assunto(db, limite)
 
 
 @router.get('/api/dashboard', dependencies=[Depends(require_api_key)])
