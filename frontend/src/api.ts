@@ -18,9 +18,12 @@ export function setApiKey(valor: string): void {
 export class ApiError extends Error {}
 
 async function pedir<T>(caminho: string): Promise<T> {
-  const resposta = await fetch(`${URL_BASE}${caminho}`, {
-    headers: { 'X-API-Key': getApiKey() },
-  });
+  // Sem chave guardada (modo proxy) não se envia o cabeçalho: é o proxy do
+  // Vite que autentica. Enviar um cabeçalho vazio estragaria o pedido.
+  const cabecalhos: Record<string, string> = {};
+  const chave = getApiKey();
+  if (chave) cabecalhos['X-API-Key'] = chave;
+  const resposta = await fetch(`${URL_BASE}${caminho}`, { headers: cabecalhos });
   if (resposta.status === 401) {
     throw new ApiError('Chave de API inválida ou ausente. Confirme a chave em cima.');
   }

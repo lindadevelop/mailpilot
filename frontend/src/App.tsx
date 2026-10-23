@@ -17,6 +17,9 @@ export default function App() {
   const [erro, setErro] = useState<string | null>(null);
   const [aberta, setAberta] = useState<Conversation | null>(null);
   const [aba, setAba] = useState<'conversas' | 'assuntos'>('conversas');
+  // Modo proxy: a chave é injetada pelo servidor, por isso a interface não a pede.
+  const [modoProxy, setModoProxy] = useState(false);
+  const [aDetetar, setADetetar] = useState(true);
 
   const carregar = useCallback(async () => {
     if (!chaveGuardada) return;
@@ -48,6 +51,30 @@ export default function App() {
     return () => window.clearInterval(id);
   }, [chaveGuardada, carregar]);
 
+  // Deteção do modo proxy: se a API responder sem chave, é o servidor que
+  // autentica e a interface deixa de pedir a chave (que se perderia sempre que
+  // o domínio do túnel mudasse).
+  useEffect(() => {
+    let cancelado = false;
+    api
+      .dashboard()
+      .then(() => {
+        if (!cancelado) {
+          setModoProxy(true);
+          setChaveGuardada(true);
+        }
+      })
+      .catch(() => {
+        /* sem proxy: mantém o pedido manual da chave */
+      })
+      .finally(() => {
+        if (!cancelado) setADetetar(false);
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, []);
+
   const guardarChave = () => {
     setApiKey(chave);
     setChaveGuardada(chave.trim().length > 0);
@@ -61,25 +88,31 @@ export default function App() {
           <div className="sub">O que exige atenção agora — sem substituir o Outlook.</div>
         </div>
         <span className="espaco" />
-        <label htmlFor="chave">Chave da API</label>
-        <input
-          id="chave"
-          type="password"
-          placeholder="X-API-Key"
-          value={chave}
-          onChange={(e) => setChave(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && guardarChave()}
-        />
-        <button className="primario" onClick={guardarChave}>
-          Guardar
-        </button>
-        <button onClick={() => void carregar()} disabled={!chaveGuardada || aCarregar}>
+        {modoProxy ? (
+          <span className="rodape">Autenticado pelo servidor local · a chave não é pedida aqui</span>
+        ) : (
+          <>
+            <label htmlFor="chave">Chave da API</label>
+            <input
+              id="chave"
+              type="password"
+              placeholder="X-API-Key"
+              value={chave}
+              onChange={(e) => setChave(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && guardarChave()}
+            />
+            <button className="primario" onClick={guardarChave}>
+              Guardar
+            </button>
+          </>
+        )}
+        <button onClick={() => void carregar()} disabled={(!chaveGuardada && !modoProxy) || aCarregar}>
           Atualizar
         </button>
       </header>
 
       <main className="conteudo">
-        {!chaveGuardada && (
+        {!chaveGuardada && !modoProxy && !aDetetar && (
           <p className="vazio">
             Indique a chave da API (a mesma <code>API_KEY</code> do <code>.env</code> do backend) para ver as
             pendências. A chave fica guardada apenas neste browser.

@@ -1,4 +1,5 @@
 import type { Conversation } from '../types';
+import { Grelha, type Coluna } from './Grelha';
 
 interface Props {
   conversas: Conversation[];
@@ -27,10 +28,68 @@ function formatarData(valor: string | null): string {
 }
 
 export function ListaConversas({ conversas, total, aCarregar, filtroEstado, onFiltroEstado, onAbrir }: Props) {
+  const colunas: Coluna<Conversation>[] = [
+    {
+      chave: 'assunto',
+      titulo: 'Assunto',
+      valor: (c) => c.subject ?? '(sem assunto)',
+      render: (c) => (
+        <>
+          <button className="ligacao" onClick={() => onAbrir(c.id)}>
+            {c.subject ?? '(sem assunto)'}
+          </button>
+          {c.last_sender && c.last_sender !== c.sender && (
+            <div className="rodape" style={{ fontSize: 11 }}>
+              última mensagem: {c.last_sender}
+              {c.last_direction === 'out' ? ' (enviada por nós)' : ''}
+            </div>
+          )}
+        </>
+      ),
+    },
+    {
+      chave: 'remetente',
+      titulo: 'Quem enviou',
+      valor: (c) => c.sender ?? '',
+      render: (c) => <span style={{ fontSize: 12 }}>{c.sender ?? '—'}</span>,
+    },
+    {
+      chave: 'estado',
+      titulo: 'Estado',
+      valor: (c) => c.state,
+      render: (c) => (
+        <span className={`etiqueta${c.state === 'Indeterminado' ? ' alerta' : ''}`}>{c.state}</span>
+      ),
+    },
+    {
+      chave: 'mensagens',
+      titulo: 'Mensagens',
+      valor: (c) => c.message_count,
+      render: (c) => (
+        <>
+          {c.message_count}
+          {c.unread ? <span className="rodape"> · {c.unread} por ler</span> : null}
+        </>
+      ),
+    },
+    {
+      chave: 'por_ler',
+      titulo: 'Por ler',
+      valor: (c) => c.unread ?? 0,
+      render: (c) => (c.unread ? <strong>{c.unread}</strong> : 0),
+    },
+    {
+      chave: 'ultima',
+      titulo: 'Última',
+      valor: (c) => c.last_message_at ?? '',
+      render: (c) => formatarData(c.last_message_at),
+    },
+  ];
+
   return (
-    <section>
+    <>
       <div className="filtros">
-        <label htmlFor="filtro-estado">Estado</label>
+        <label htmlFor="filtro-estado">Estado (filtra no servidor)</label>
         <select id="filtro-estado" value={filtroEstado} onChange={(e) => onFiltroEstado(e.target.value)}>
           <option value="">Todos</option>
           {ESTADOS.map((estado) => (
@@ -44,51 +103,13 @@ export function ListaConversas({ conversas, total, aCarregar, filtroEstado, onFi
         </span>
       </div>
 
-      {conversas.length === 0 && !aCarregar ? (
-        <p className="vazio">
-          Sem conversas. Importe mensagens pela API (<code>POST /api/emails/batch</code>) para começar.
-        </p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Assunto</th>
-              <th>Quem enviou</th>
-              <th>Estado</th>
-              <th>Mensagens</th>
-              <th>Última</th>
-            </tr>
-          </thead>
-          <tbody>
-            {conversas.map((c) => (
-              <tr key={c.id}>
-                <td>
-                  <button className="ligacao" onClick={() => onAbrir(c.id)}>
-                    {c.subject ?? '(sem assunto)'}
-                  </button>
-                </td>
-                <td>
-                  <div style={{ fontSize: 12 }}>{c.sender ?? '—'}</div>
-                  {c.last_sender && c.last_sender !== c.sender && (
-                    <div className="rodape" style={{ fontSize: 11 }}>
-                      última: {c.last_sender}
-                      {c.last_direction === 'out' ? ' (enviada por nós)' : ''}
-                    </div>
-                  )}
-                </td>
-                <td>
-                  <span className={`etiqueta${c.state === 'Indeterminado' ? ' alerta' : ''}`}>{c.state}</span>
-                </td>
-                <td>
-                  {c.message_count}
-                  {c.unread ? <span className="rodape"> · {c.unread} por ler</span> : null}
-                </td>
-                <td>{formatarData(c.last_message_at)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </section>
+      <Grelha
+        linhas={conversas}
+        colunas={colunas}
+        chaveLinha={(c) => c.id}
+        agrupaveis={['estado', 'remetente']}
+        textoVazio="Sem conversas. Importe mensagens pela API (POST /api/emails/batch) para começar."
+      />
+    </>
   );
 }

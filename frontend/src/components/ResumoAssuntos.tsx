@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api';
-import type { SubjectsReport } from '../types';
+import type { SubjectSummary, SubjectsReport } from '../types';
+import { Grelha, type Coluna } from './Grelha';
 
 interface Props {
   onAbrir: (id: number) => void;
@@ -39,6 +40,76 @@ export function ResumoAssuntos({ onAbrir }: Props) {
     void carregar();
   }, [carregar]);
 
+  const colunas: Coluna<SubjectSummary>[] = [
+    {
+      chave: 'assunto',
+      titulo: 'Assunto',
+      valor: (t) => t.assunto,
+      render: (t) => (
+        <>
+          <button className="ligacao" onClick={() => setAberto(aberto === t.assunto ? null : t.assunto)}>
+            {t.assunto}
+          </button>
+          {t.variantes.length > 0 && (
+            <div className="rodape" style={{ fontSize: 11 }}>
+              inclui: {t.variantes.join(' · ')}
+            </div>
+          )}
+          {aberto === t.assunto && (
+            <ul className="rodape" style={{ paddingLeft: 16, margin: '4px 0 0' }}>
+              {t.conversation_ids.map((id) => (
+                <li key={id}>
+                  <button className="ligacao" onClick={() => onAbrir(id)}>
+                    abrir conversa {id}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      ),
+    },
+    {
+      chave: 'remetentes',
+      titulo: 'Quem escreve',
+      valor: (t) => t.remetentes.join(', '),
+      render: (t) =>
+        t.remetentes.length === 0 ? (
+          '—'
+        ) : (
+          <>
+            {t.remetentes.map((r) => (
+              <div key={r} style={{ fontSize: 12 }}>
+                {r}
+              </div>
+            ))}
+          </>
+        ),
+    },
+    { chave: 'conversas', titulo: 'Conversas', valor: (t) => t.conversas },
+    { chave: 'mensagens', titulo: 'Mensagens', valor: (t) => t.mensagens },
+    {
+      chave: 'por_ler',
+      titulo: 'Por ler',
+      valor: (t) => t.por_ler,
+      render: (t) => (t.por_ler > 0 ? <strong>{t.por_ler}</strong> : 0),
+    },
+    {
+      chave: 'estado',
+      titulo: 'Estado',
+      valor: (t) => t.estado,
+      render: (t) => (
+        <span className={`etiqueta${t.estado === 'Indeterminado' ? ' alerta' : ''}`}>{t.estado}</span>
+      ),
+    },
+    {
+      chave: 'ultima',
+      titulo: 'Última',
+      valor: (t) => t.ultima ?? '',
+      render: (t) => formatarData(t.ultima),
+    },
+  ];
+
   return (
     <section>
       <div className="filtros">
@@ -58,68 +129,13 @@ export function ResumoAssuntos({ onAbrir }: Props) {
 
       {erro && <div className="erro">{erro}</div>}
 
-      {dados && dados.items.length === 0 && !aCarregar && (
-        <p className="vazio">Sem assuntos. Importe mensagens para começar a ver os temas agrupados.</p>
-      )}
-
-      {dados && dados.items.length > 0 && (
-        <table>
-          <thead>
-            <tr>
-              <th>Assunto</th>
-              <th>Quem escreve</th>
-              <th>Conversas</th>
-              <th>Mensagens</th>
-              <th>Por ler</th>
-              <th>Estado</th>
-              <th>Última</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dados.items.map((t) => (
-              <tr key={t.assunto}>
-                <td>
-                  <button className="ligacao" onClick={() => setAberto(aberto === t.assunto ? null : t.assunto)}>
-                    {t.assunto}
-                  </button>
-                  {t.variantes.length > 0 && (
-                    <div className="rodape" style={{ fontSize: 11 }}>
-                      inclui: {t.variantes.join(' · ')}
-                    </div>
-                  )}
-                  {aberto === t.assunto && (
-                    <ul className="rodape" style={{ paddingLeft: 16, margin: '4px 0 0' }}>
-                      {t.conversation_ids.map((id) => (
-                        <li key={id}>
-                          <button className="ligacao" onClick={() => onAbrir(id)}>
-                            abrir conversa {id}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </td>
-                <td>
-                  {t.remetentes.length === 0
-                    ? '—'
-                    : t.remetentes.map((r) => (
-                        <div key={r} style={{ fontSize: 12 }}>
-                          {r}
-                        </div>
-                      ))}
-                </td>
-                <td>{t.conversas}</td>
-                <td>{t.mensagens}</td>
-                <td>{t.por_ler > 0 ? <strong>{t.por_ler}</strong> : 0}</td>
-                <td>
-                  <span className={`etiqueta${t.estado === 'Indeterminado' ? ' alerta' : ''}`}>{t.estado}</span>
-                </td>
-                <td>{formatarData(t.ultima)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <Grelha
+        linhas={dados?.items ?? []}
+        colunas={colunas}
+        chaveLinha={(t) => t.assunto}
+        agrupaveis={['estado', 'remetentes']}
+        textoVazio="Sem assuntos. Importe mensagens para começar a ver os temas agrupados."
+      />
 
       <p className="rodape">
         Os temas juntam «Re:», «Fwd:» e «Enc:» do mesmo assunto. O estado apresentado é o mais exigente das
