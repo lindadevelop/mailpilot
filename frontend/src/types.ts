@@ -38,3 +38,32 @@ export interface SyncStatus {
   message_count: number;
   conversation_count: number;
 }
+
+export interface AnalysisEvidence {
+  message_id: number;
+  quote: string | null;
+}
+
+export interface Analysis {
+  id: number;
+  state: string;
+  reason: string | null;
+  confidence: number | null;
+  deadline_text: string | null;
+  commitments: string | null;
+  model: string | null;
+  created_at: string | null;
+  evidence: AnalysisEvidence[];
+}
+
+export interface Draft {
+  id: number;
+  mode: string;
+  subject: string | null;
+  body: string;
+  status: string;
+  created_at: string | null;
+}
+
+export const DRAFT_MODES = ['objetivo', 'diplomatico', 'tecnico', 'firme_cordial'] as const;
+export type DraftMode = (typeof DRAFT_MODES)[number];
